@@ -20,7 +20,6 @@ class Food():
 class PoisonousFood(Food):
 
 
-
 class Pipe():
     def __init__(self):
         self.x = 100

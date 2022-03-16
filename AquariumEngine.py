@@ -18,19 +18,31 @@ class Food():
         # Q7: Fill in this method
         ######################################################
 
+class PoisonousFood(Food):
+    def __init__(self, x_pos, y_pos):
+        self.x = x_pos
+        self.y = y_pos
+        self.radius = 15
+        self.speed = random.randint(6,12)
+
+    def move_down(self):
+        self.y += self.speed
 
 class Pipe():
-    def __init__(self):
-        self.x = 100
+    def __init__(self, x):
+        self.x = x
         self.y = 100
         self.radius = 70
         # list of Food objects which have been added to this pipe
         self.food_pieces = []
 
+
     def add_food(self):
         add_food_int = random.randint(1, 100)
-        if add_food_int == 1 or 2:
+        if add_food_int <= 60:
             self.food_pieces.append(Food(self.x, 70))
+        else:
+            self.food_pieces.append(PoisonousFood(self.x, 70))
 
     def move_food(self, boundary_y, player):
         count = 0
@@ -46,7 +58,10 @@ class Pipe():
             if food.x == player.x:
                 if food.y >= player.y and food.y <= player.y+player.height:
                     self.food_pieces.remove(food)
-                    count += 1
+                    if isinstance(food, PoisonousFood):
+                        count -= 1
+                    else:
+                        count += 1
         return count
 
 
@@ -123,7 +138,8 @@ class Aquarium():
                            aquarium_width=self.width)
 
         ## pipe
-        self.pipe = Pipe()
+        self.pipes = [Pipe(100),Pipe(200)]
+
 
         ## interface
         self.DISPLAY = AquariumGraphics.setup_display(self.width, self.height)
@@ -135,7 +151,7 @@ class Aquarium():
         # A wrapper around the `AquariumGraphics.draw_board` function that picks all
         # the right components of `self`.
         AquariumGraphics.draw_board(self.DISPLAY, self.width, self.height, self.score,
-                                    self.game_running, self.player, self.pipe)
+                                    self.game_running, self.player, self.pipes)
 
     def game_loop(self):
         while self.game_running:
@@ -143,9 +159,10 @@ class Aquarium():
             # Q6: Uncomment self.pipe.add_food()
             ######################################################
             # Add food to the pipe
-            add_food_int = random.randint(1, 100)
-            if add_food_int == 1 or add_food_int == 2:
-                self.pipe.add_food()
+            for pipe in self.pipes:
+                add_food_int = random.randint(1, 100)
+                if add_food_int == 1 or add_food_int == 2:
+                    pipe.add_food()
 
             # Process all events
             for event in pygame.event.get():
@@ -158,8 +175,9 @@ class Aquarium():
             self.player.handle_movement(keys_pressed)
 
             # Move food down pipe
-            count = self.pipe.move_food(boundary_y=self.height, player=self.player)
-            self.score += count
+            for pipe in self.pipes:
+                count = pipe.move_food(boundary_y=self.height, player=self.player)
+                self.score += count
 
             # Refresh the display and loop back
             self.draw()
